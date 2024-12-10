@@ -1,0 +1,30 @@
+<h2 mat-dialog-title>{{ formType | titlecase }} Employee</h2>
+
+<div mat-dialog-content>
+  <!-- Form fields for Add and Update actions -->
+  <div *ngIf="formType === 'add' || formType === 'update' || formType === 'delete' ">
+    <mat-form-field>
+      <mat-label>ID</mat-label>
+      <input matInput [(ngModel)]="currentEmployee.id" [readonly] />
+    </mat-form-field>
+
+    <mat-form-field *ngIf="formType === 'add'">
+      <mat-label>Name</mat-label>
+      <input matInput [(ngModel)]="currentEmployee.name" />
+    </mat-form-field>
+
+    <mat-form-field *ngIf="formType === 'add' || formType === 'update'">
+      <mat-label>Location</mat-label>
+      <input matInput [(ngModel)]="currentEmployee.loc" />
+    </mat-form-field>
+
+    <mat-form-field *ngIf="formType === 'add'">
+      <mat-label>Salary</mat-label>
+      <input matInput [(ngModel)]="currentEmployee.sal" type="number" />
+    </mat-form-field>
+  </div>
+
+<div mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSubmit()" cdkFocusInitial>{{ formType | titlecase }}</button>
+</div>

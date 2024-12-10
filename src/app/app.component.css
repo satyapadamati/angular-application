@@ -1,0 +1,67 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+  background-color: #0e0e0e;
+  color: #333;
+}
+
+h1 {
+  text-align: center;
+  color: #4CAF50;
+  margin-bottom: 20px;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 20px 0;
+  background-color: #fff; /* No color for body rows */
+  border: 1px solid black; /* Black border for the entire table */
+}
+
+table th {
+  padding: 12px;
+  background-color: #4CAF50; /* Green header background */
+  color: #fff; /* White header text */
+  border: 1px solid black; /* Black border around headers */
+}
+
+table td {
+  padding: 12px;
+  border: 1px solid black; /* Black border for each cell */
+}
+
+table tr:nth-child(even) {
+  background-color: transparent; /* No background color for even rows */
+}
+
+/* Styling for the buttons */
+.buttons {
+  display: flex;
+  justify-content: center; /* Center the buttons horizontally */
+  gap: 10px; /* Adds space between the buttons */
+  margin-bottom: 20px; /* Adds margin below the button row */
+}
+
+button {
+  padding: 10px 15px;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+button.mat-raised-button {
+  background-color: #4CAF50; /* Green for the add button */
+}
+
+button.mat-raised-button[color="accent"] {
+  background-color: #ff9800; /* Orange for the update button */
+}
+
+/* Change the Delete button color to light pink */
+button.mat-raised-button[color="warn"] {
+  background-color: #f8bbd0; /* Light pink for the delete button */
+}
