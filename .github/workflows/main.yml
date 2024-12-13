@@ -3,7 +3,7 @@ name: Deploy Angular App to IIS
 on:
   push:
     branches:
-      - dev  # Trigger on push to the 'dev' branch
+      - dev
 
 jobs:
   build-and-deploy:
@@ -18,11 +18,11 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 18  # Ensure this matches your project's Node.js version
+        node-version: 16  # Downgrade to Node.js 16
 
     # Step 3: Install Dependencies and Build Angular App
     - name: Install Dependencies
-      run: npm install 
+      run: npm ci  # Clean install dependencies
 
     - name: Build Angular App
       run: npm run build -- --configuration=production
