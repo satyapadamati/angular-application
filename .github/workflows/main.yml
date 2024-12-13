@@ -29,11 +29,5 @@ jobs:
 
     # Step 4: Deploy to IIS Server
     - name: Deploy to IIS Server
-      uses: burnett01/rsync-deployments@v1.1
-      with:
-        switches: -avz
-        path: ./dist/my-angular9-app/  # Adjust to match your Angular output path
-        remote_path: C:/inetpub/wwwroot/my-angular9-app/  # Destination path on the IIS server
-        remote_host: ${{ secrets.IIS_SERVER_HOST }}
-        remote_user: ${{ secrets.IIS_SERVER_USER }}
-        remote_key: ${{ secrets.IIS_SERVER_KEY }}
+      run: |
+        rsync -avz -e "ssh -i ${{ secrets.IIS_SERVER_KEY }}" ./dist/my-angular9-app/ ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }}:/inetpub/wwwroot/my-angular9-app/
