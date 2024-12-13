@@ -1,0 +1,39 @@
+name: Deploy Angular App to IIS
+
+on:
+  push:
+    branches:
+      - dev  # Trigger on push to the 'dev' branch
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # Step 1: Checkout Code
+    - name: Checkout Code
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18  # Ensure this matches your project's Node.js version
+
+    # Step 3: Install Dependencies and Build Angular App
+    - name: Install Dependencies
+      run: npm install 
+
+    - name: Build Angular App
+      run: npm run build -- --configuration=production
+
+    # Step 4: Deploy to IIS Server
+    - name: Deploy to IIS Server
+      uses: burnett01/rsync-deployments@v1.1
+      with:
+        switches: -avz
+        path: ./dist/my-angular9-app/  # Adjust to match your Angular output path
+        remote_path: C:/inetpub/wwwroot/my-angular9-app/  # Destination path on the IIS server
+        remote_host: ${{ secrets.IIS_SERVER_HOST }}
+        remote_user: ${{ secrets.IIS_SERVER_USER }}
+        remote_key: ${{ secrets.IIS_SERVER_KEY }}
