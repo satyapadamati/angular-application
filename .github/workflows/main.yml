@@ -33,10 +33,10 @@ jobs:
       shell: bash
 
     - name: Test SSH Connection
-      run: ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }} "echo 'SSH connection successful'"
+      run: ssh -i ~/.ssh/id_rsa ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }} "echo 'SSH connection successful'"
       shell: bash
 
     - name: Deploy to IIS Server
       run: |
-        rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" ./dist/my-angular9-app/ ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }}:/inetpub/wwwroot/my-angular9-app/
+        rsync -avz -e "ssh -i ~/.ssh/id_rsa" ./dist/my-angular9-app/ ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }}:/inetpub/wwwroot/my-angular9-app/
       shell: bash
