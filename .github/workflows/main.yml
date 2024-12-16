@@ -24,9 +24,13 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Deploy to IIS Server
+    - name: Prepare SSH Key
       run: |
         mkdir -p ~/.ssh
         echo "${{ secrets.IIS_SERVER_KEY }}" > ~/.ssh/id_rsa
         chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.IIS_SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy to IIS Server
+      run: |
         rsync -avz -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" ./dist/my-angular9-app/ ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }}:/inetpub/wwwroot/my-angular9-app/
