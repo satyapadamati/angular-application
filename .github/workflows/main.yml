@@ -24,20 +24,21 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Prepare SSH Key
-      run: |
-        mkdir -p ~/.ssh
-        chmod 700 ~/.ssh
-        echo "${{ secrets.IIS_SERVER_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -H ${{ secrets.IIS_SERVER_HOST }} >> ~/.ssh/known_hosts
-      shell: bash
+    - name: Deploy to IIS using WinRM
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.IIS_SERVER_HOST }}
+        username: ${{ secrets.IIS_SERVER_USER }}
+        password: ${{ secrets.IIS_SERVER_PASSWORD }}
+        source: "./dist/my-angular9-app/"
+        target: "C:/inetpub/wwwroot/my-angular9-app/"
 
-    - name: Test SSH Connection
-      run: ssh -i ~/.ssh/id_rsa ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }} "echo 'SSH connection successful'"
-      shell: bash
-
-    - name: Deploy to IIS Server
-      run: |
-        rsync -avz -e "ssh -i ~/.ssh/id_rsa" ./dist/my-angular9-app/ ${{ secrets.IIS_SERVER_USER }}@${{ secrets.IIS_SERVER_HOST }}:/inetpub/wwwroot/my-angular9-app/
-      shell: bash
+    - name: Restart IIS
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.IIS_SERVER_HOST }}
+        username: ${{ secrets.IIS_SERVER_USER }}
+        password: ${{ secrets.IIS_SERVER_PASSWORD }}
+        script: |
+          Write-Host "Restarting IIS...";
+          iisreset
