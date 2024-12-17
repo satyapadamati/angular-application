@@ -34,6 +34,7 @@ jobs:
         target: "C:/inetpub/wwwroot/my-angular9-app/"
         port: 22  # Ensure this port is open and accessible
         debug: true
+        command_timeout: 10m
 
     - name: Restart IIS using WinRM
       uses: appleboy/ssh-action@v1.0.0
