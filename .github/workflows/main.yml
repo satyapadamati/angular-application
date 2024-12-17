@@ -13,11 +13,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install PowerShell Core
-        uses: actions/setup-powershell@v2
-        with:
-          version: '7.1'
-
       - name: Install Dependencies
         run: npm ci
 
@@ -34,7 +29,7 @@ jobs:
           $password = "${{ secrets.IIS_SERVER_PASSWORD }}"  # Use your IIS server password from GitHub Secrets
           $sourceDir = "$(Build.SourcesDirectory)\dist\my-angular9-app"
           $destinationDir = "C:\inetpub\wwwroot\my-angular9-app"  # Replace with your IIS site directory
-
+          
           # Create a secure password object
           $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
           $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
@@ -49,10 +44,10 @@ jobs:
           
           # Copy the built Angular app files via SMB
           Copy-Item -Path "$sourceDir\*" -Destination $smbShare -Recurse -Force -Credential $credential
-
           Write-Host "Files copied successfully to IIS server."
 
       - name: Restart IIS (via PowerShell)
+        shell: pwsh
         run: |
           # Restart IIS to apply changes
           Write-Host "Restarting IIS..."
