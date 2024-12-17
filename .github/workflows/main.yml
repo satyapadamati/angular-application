@@ -24,25 +24,28 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Deploy to IIS using SCP
-      uses: appleboy/scp-action@v0.1.4
+    - name: Copy Files to IIS Server using WinRM
+      uses: microsoft/psscript-action@v1
       with:
-        host: ${{ secrets.IIS_SERVER_HOST }}
-        username: ${{ secrets.IIS_SERVER_USER }}
-        password: ${{ secrets.IIS_SERVER_PASSWORD }}
-        source: "./dist/my-angular9-app/"
-        target: "C:/inetpub/wwwroot/my-angular9-app/"
-        port: 22  # Ensure this port is open and accessible
-        debug: true
-        command_timeout: 10m
+        inlineScript: |
+          # Establish WinRM connection
+          $destinationPath = "C:\inetpub\wwwroot\my-angular9-app"
+          $sourcePath = "./dist/my-angular9-app/*"
 
-    - name: Restart IIS using WinRM
-      uses: appleboy/ssh-action@v1.0.0
+          Write-Host "Copying files to IIS server..."
+          if (-Not (Test-Path -Path $destinationPath)) {
+              New-Item -Path $destinationPath -ItemType Directory -Force
+          }
+
+          # Use robocopy for reliable file transfer
+          robocopy ${{ github.workspace }}\dist\my-angular9-app $destinationPath /E /MIR
+
+          Write-Host "Files copied successfully!"
+
+    - name: Restart IIS Server
+      uses: microsoft/psscript-action@v1
       with:
-        host: ${{ secrets.IIS_SERVER_HOST }}
-        username: ${{ secrets.IIS_SERVER_USER }}
-        password: ${{ secrets.IIS_SERVER_PASSWORD }}
-        script: |
+        inlineScript: |
           Write-Host "Restarting IIS..."
           iisreset
-        port: 5985  # Ensure WinRM port is open (default 5985 for HTTP, 5986 for HTTPS)
+          Write-Host "IIS restarted successfully!"
