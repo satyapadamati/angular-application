@@ -1,4 +1,4 @@
-name: Deploy Angular App to IIs
+name: Deploy Angular App to IIS
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Deploy to IIS using WinRM
+    - name: Deploy to IIS using SCP
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.IIS_SERVER_HOST }}
@@ -32,14 +32,16 @@ jobs:
         password: ${{ secrets.IIS_SERVER_PASSWORD }}
         source: "./dist/my-angular9-app/"
         target: "C:/inetpub/wwwroot/my-angular9-app/"
+        port: 22  # Ensure this port is open and accessible
         debug: true
 
-    - name: Restart IIS
+    - name: Restart IIS using WinRM
       uses: appleboy/ssh-action@v1.0.0
       with:
         host: ${{ secrets.IIS_SERVER_HOST }}
         username: ${{ secrets.IIS_SERVER_USER }}
         password: ${{ secrets.IIS_SERVER_PASSWORD }}
         script: |
-          Write-Host "Restarting IIS...";
+          Write-Host "Restarting IIS..."
           iisreset
+        port: 5985  # Ensure WinRM port is open (default 5985 for HTTP, 5986 for HTTPS)
