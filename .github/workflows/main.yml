@@ -3,20 +3,20 @@ name: Deploy Angular App to IIS
 on:
   push:
     branches:
-      - dev
+      - dev  # Trigger deployment when changes are pushed to the 'dev' branch
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # Use a Windows runner for IIS deployment
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
+      - name: Install PowerShell Core
+        uses: actions/setup-powershell@v2
         with:
-          node-version: 16
+          version: '7.1'
 
       - name: Install Dependencies
         run: npm ci
@@ -24,24 +24,36 @@ jobs:
       - name: Build Angular App
         run: npm run build -- --configuration=production
 
-      - name: Deploy to IIS using SCP
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.IIS_SERVER_HOST }}
-          username: ${{ secrets.IIS_SERVER_USER }}
-          password: ${{ secrets.IIS_SERVER_PASSWORD }}
-          source: "./dist/my-angular9-app/"
-          target: "C:/inetpub/wwwroot/my-angular9-app/"
-          port: 22  # Ensure this port is open and accessible
-          debug: true
-          command_timeout: 10m
-
-      - name: Restart IIS using PowerShell
-        shell: pwsh
+      - name: Copy files to IIS server (via PowerShell)
         run: |
+          $errorActionPreference = "Stop"
+          
+          # Set IIS server details
+          $server = "${{ secrets.IIS_SERVER_HOST }}"  # Use your IIS server IP address or hostname from GitHub Secrets
+          $username = "${{ secrets.IIS_SERVER_USER }}"  # Use your IIS server username from GitHub Secrets
+          $password = "${{ secrets.IIS_SERVER_PASSWORD }}"  # Use your IIS server password from GitHub Secrets
+          $sourceDir = "$(Build.SourcesDirectory)\dist\my-angular9-app"
+          $destinationDir = "C:\inetpub\wwwroot\my-angular9-app"  # Replace with your IIS site directory
+
+          # Create a secure password object
+          $securePassword = ConvertTo-SecureString $password -AsPlainText -Force
+          $credential = New-Object System.Management.Automation.PSCredential ($username, $securePassword)
+
+          # Test the connection to the IIS server to ensure it's reachable
+          Write-Host "Testing connection to the IIS server..."
+          Test-Connection -ComputerName $server -Count 4 -Quiet
+          
+          # Check if SMB share is accessible before copying files
+          $smbShare = "\\$server\$destinationDir"
+          Write-Host "Attempting to copy files to $smbShare..."
+          
+          # Copy the built Angular app files via SMB
+          Copy-Item -Path "$sourceDir\*" -Destination $smbShare -Recurse -Force -Credential $credential
+
+          Write-Host "Files copied successfully to IIS server."
+
+      - name: Restart IIS (via PowerShell)
+        run: |
+          # Restart IIS to apply changes
           Write-Host "Restarting IIS..."
-          iisreset
-        env:
-          WINRM_HOST: ${{ secrets.IIS_SERVER_HOST }}
-          WINRM_USER: ${{ secrets.IIS_SERVER_USER }}
-          WINRM_PASSWORD: ${{ secrets.IIS_SERVER_PASSWORD }}
+          Invoke-Command -ScriptBlock { iisreset } -ComputerName "${{ secrets.IIS_SERVER_HOST }}" -Credential $credential
