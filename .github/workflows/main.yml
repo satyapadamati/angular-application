@@ -10,42 +10,38 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
-      uses: actions/checkout@v3
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
 
-    - name: Install Dependencies
-      run: npm ci
+      - name: Install Dependencies
+        run: npm ci
 
-    - name: Build Angular App
-      run: npm run build -- --configuration=production
+      - name: Build Angular App
+        run: npm run build -- --configuration=production
 
-    - name: Copy Files to IIS Server using WinRM
-      uses: microsoft/psscript-action@v1
-      with:
-        inlineScript: |
-          # Establish WinRM connection
-          $destinationPath = "C:\inetpub\wwwroot\my-angular9-app"
-          $sourcePath = "./dist/my-angular9-app/*"
+      - name: Deploy to IIS using SCP
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.IIS_SERVER_HOST }}
+          username: ${{ secrets.IIS_SERVER_USER }}
+          password: ${{ secrets.IIS_SERVER_PASSWORD }}
+          source: "./dist/my-angular9-app/"
+          target: "C:/inetpub/wwwroot/my-angular9-app/"
+          port: 22  # Ensure this port is open and accessible
+          debug: true
+          command_timeout: 10m
 
-          Write-Host "Copying files to IIS server..."
-          if (-Not (Test-Path -Path $destinationPath)) {
-              New-Item -Path $destinationPath -ItemType Directory -Force
-          }
-
-          # Use robocopy for reliable file transfer
-          robocopy ${{ github.workspace }}\dist\my-angular9-app $destinationPath /E /MIR
-
-          Write-Host "Files copied successfully!"
-
-    - name: Restart IIS Server
-      uses: microsoft/psscript-action@v1
-      with:
-        inlineScript: |
+      - name: Restart IIS using PowerShell
+        shell: pwsh
+        run: |
           Write-Host "Restarting IIS..."
           iisreset
-          Write-Host "IIS restarted successfully!"
+        env:
+          WINRM_HOST: ${{ secrets.IIS_SERVER_HOST }}
+          WINRM_USER: ${{ secrets.IIS_SERVER_USER }}
+          WINRM_PASSWORD: ${{ secrets.IIS_SERVER_PASSWORD }}
