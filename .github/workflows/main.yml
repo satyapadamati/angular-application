@@ -32,6 +32,7 @@ jobs:
         password: ${{ secrets.IIS_SERVER_PASSWORD }}
         source: "./dist/my-angular9-app/"
         target: "C:/inetpub/wwwroot/my-angular9-app/"
+        debug: true
 
     - name: Restart IIS
       uses: appleboy/ssh-action@v1.0.0
