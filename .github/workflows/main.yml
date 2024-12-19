@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
 
     steps:
     - name: Checkout Code
@@ -19,29 +19,19 @@ jobs:
         node-version: 16
 
     - name: Install Dependencies
-      run: npm ci
+      run: npm install
 
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Deploy to IIS using SCP
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.IIS_SERVER_HOST }}
-        username: ${{ secrets.IIS_SERVER_USER }}
-        password: ${{ secrets.IIS_SERVER_PASSWORD }}
-        source: "./dist/my-angular9-app/"
-        target: "C:/inetpub/wwwroot/my-angular9-app/"
-        port: 22  # Ensure this port is open and accessible
-        debug: true
-
-    - name: Restart IIS using WinRM
-      uses: appleboy/ssh-action@v1.0.0
-      with:
-        host: ${{ secrets.IIS_SERVER_HOST }}
-        username: ${{ secrets.IIS_SERVER_USER }}
-        password: ${{ secrets.IIS_SERVER_PASSWORD }}
-        script: |
-          Write-Host "Restarting IIS..."
-          iisreset
-        port: 5985  # Ensure WinRM port is open (default 5985 for HTTP, 5986 for HTTPS)
+    - name: Deploy to IIS using Web Deploy
+      env:
+        WEBDEPLOY_SERVER: ${{ secrets.WEBDEPLOY_SERVER }}
+        WEBDEPLOY_USER: ${{ secrets.WEBDEPLOY_USER }}
+        WEBDEPLOY_PASS: ${{ secrets.WEBDEPLOY_PASS }}
+      run: |
+        # Install Web Deploy on GitHub Runner
+        choco install webdeploy -y
+        
+        # Package and deploy the Angular app using Web Deploy
+        msdeploy.exe -verb:sync -source:contentPath="./dist/my-angular9-app" -dest:contentPath="C:\inetpub\wwwroot\my-angular9-app",computerName="https://${{ secrets.WEBDEPLOY_SERVER }}:8172/msdeploy.axd",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASS }}" -enableRule:AppOffline
