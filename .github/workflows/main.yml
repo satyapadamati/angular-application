@@ -6,7 +6,7 @@ on:
       - dev
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: windows-latest
 
     steps:
@@ -24,26 +24,29 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
-    - name: Install Web Deploy
-      run: choco install webdeploy -y
-
-    - name: Deploy to IIS using Web Deploy
+    - name: Deploy to IIS
+      shell: pwsh
       env:
-        WEBDEPLOY_SERVER: ${{ secrets.WEBDEPLOY_SERVER }}
-        WEBDEPLOY_USER: ${{ secrets.WEBDEPLOY_USER }}
-        WEBDEPLOY_PASS: ${{ secrets.WEBDEPLOY_PASS }}
+        IIS_SERVER: ${{ secrets.IIS_SERVER }}
+        IIS_USER: ${{ secrets.IIS_USER }}
+        IIS_PASSWORD: ${{ secrets.IIS_PASSWORD }}
       run: |
-        # Explicitly use the Web Deploy installation path
-        $msdeployPath = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-        if (-not (Test-Path $msdeployPath)) {
-          $msdeployPath = "C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe"
-        }
-        if (-not (Test-Path $msdeployPath)) {
-          Write-Error "Web Deploy is not installed or the executable path cannot be found."
-        }
-        # Package and deploy the Angular app
-        & $msdeployPath `
-          -verb:sync `
-          -source:contentPath="./dist/my-angular9-app" `
-          -dest:contentPath="C:\inetpub\wwwroot\my-angular9-app",computerName="https://${{ secrets.WEBDEPLOY_SERVER }}:8172/msdeploy.axd",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASS }}" `
-          -enableRule:AppOffline
+        $password = ConvertTo-SecureString "${{ secrets.IIS_PASSWORD }}" -AsPlainText -Force
+        $credential = New-Object System.Management.Automation.PSCredential("${{ secrets.IIS_USER }}", $password)
+        
+        # Define source and destination paths
+        $sourcePath = "${{ github.workspace }}\dist\my-angular9-app"
+        $destinationPath = "C:\inetpub\wwwroot\my-angular9-app"
+        
+        # Copy files to IIS server
+        Invoke-Command -ComputerName "${{ secrets.IIS_SERVER }}" -Credential $credential -ScriptBlock {
+            param($source, $destination)
+            
+            # Create the destination directory if it doesn't exist
+            if (-Not (Test-Path -Path $destination)) {
+                New-Item -ItemType Directory -Path $destination
+            }
+            
+            # Copy files
+            Copy-Item -Path $source\* -Destination $destination -Recurse -Force
+        } -ArgumentList $sourcePath, $destinationPath
