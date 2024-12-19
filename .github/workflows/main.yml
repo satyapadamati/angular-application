@@ -24,14 +24,24 @@ jobs:
     - name: Build Angular App
       run: npm run build -- --configuration=production
 
+    - name: Install Web Deploy
+      run: choco install webdeploy -y
+
     - name: Deploy to IIS using Web Deploy
       env:
         WEBDEPLOY_SERVER: ${{ secrets.WEBDEPLOY_SERVER }}
         WEBDEPLOY_USER: ${{ secrets.WEBDEPLOY_USER }}
         WEBDEPLOY_PASS: ${{ secrets.WEBDEPLOY_PASS }}
       run: |
-        # Install Web Deploy on GitHub Runner
-        choco install webdeploy -y
-        
-        # Package and deploy the Angular app using Web Deploy
-        msdeploy.exe -verb:sync -source:contentPath="./dist/my-angular9-app" -dest:contentPath="C:\inetpub\wwwroot\my-angular9-app",computerName="https://${{ secrets.WEBDEPLOY_SERVER }}:8172/msdeploy.axd",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASS }}" -enableRule:AppOffline
+        # Explicitly use the Web Deploy installation path
+        $msdeployPath = "C:\Program Files\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+        if (-not (Test-Path $msdeployPath)) {
+          $msdeployPath = "C:\Program Files (x86)\IIS\Microsoft Web Deploy V3\msdeploy.exe"
+        }
+
+        if (-not (Test-Path $msdeployPath)) {
+          Write-Error "Web Deploy is not installed or the executable path cannot be found."
+        }
+
+        # Package and deploy the Angular app
+        & $msdeployPath -verb:sync -source:contentPath="./dist/my-angular9-app" -dest:contentPath="C:\inetpub\wwwroot\my-angular9-app",computerName="https://${{ secrets.WEBDEPLOY_SERVER }}:8172/msdeploy.axd",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASS }}" -enableRule:AppOffline
