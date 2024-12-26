@@ -1,4 +1,4 @@
-name: Deploy Angular App to IIS
+name: Deploy Angular App to IIs
 
 on:
   push:
