@@ -24,6 +24,10 @@ jobs:
     - name: Build Angular project
       run: npm run build -- --prod
 
+    - name: Add EC2 host to known_hosts
+      run: |
+        ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
+
     - name: Deploy to EC2
       env:
         EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
@@ -32,5 +36,5 @@ jobs:
       run: |
         echo "$EC2_SSH_KEY" > key.pem
         chmod 600 key.pem
-        scp -i key.pem -r dist/angular-application/* $EC2_USER@$EC2_PUBLIC_IP:/var/www/angular-app/
-        ssh -i key.pem $EC2_USER@$EC2_PUBLIC_IP "sudo systemctl restart nginx"
+        scp -o StrictHostKeyChecking=no -i key.pem -r dist/angular-application/* $EC2_USER@$EC2_PUBLIC_IP:/var/www/angular-app/
+        ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USER@$EC2_PUBLIC_IP "sudo systemctl restart nginx"
