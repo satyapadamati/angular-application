@@ -37,5 +37,5 @@ jobs:
       run: |
         echo "$EC2_SSH_KEY" > key.pem
         chmod 600 key.pem
-        scp -o StrictHostKeyChecking=no -i key.pem -r dist/angular-application/* $EC2_USER@$EC2_PUBLIC_IP:/var/www/angular-app/
+        scp -o StrictHostKeyChecking=no -i key.pem -r dist/MyAngular9App/* $EC2_USER@$EC2_PUBLIC_IP:/var/www/angular-app/
         ssh -o StrictHostKeyChecking=no -i key.pem $EC2_USER@$EC2_PUBLIC_IP "sudo systemctl restart nginx"
