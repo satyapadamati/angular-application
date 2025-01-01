@@ -1,37 +1,36 @@
-name: Deploy Angular App to IIs
+name: Deploy Angular to AWS EC2
 
 on:
   push:
     branches:
-      - dev
+      - main
 
 jobs:
-  build-and-deploy:
-    runs-on: windows-latest
+  deploy:
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Set up Node.js
+    - name: Install Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: 16
+        node-version: '16'
 
-    - name: Install Dependencies
+    - name: Install dependencies
       run: npm install
 
-    - name: Build Angular App
-      run: npm run build -- --configuration=production
+    - name: Build Angular project
+      run: npm run build -- --prod
 
-    - name: Deploy to IIS using Web Deploy
+    - name: Deploy to EC2
       env:
-        WEBDEPLOY_SERVER: ${{ secrets.WEBDEPLOY_SERVER }}
-        WEBDEPLOY_USER: ${{ secrets.WEBDEPLOY_USER }}
-        WEBDEPLOY_PASS: ${{ secrets.WEBDEPLOY_PASS }}
+        EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+        EC2_PUBLIC_IP: ${{ secrets.EC2_PUBLIC_IP }}
+        EC2_USER: ${{ secrets.EC2_USER }}
       run: |
-        # Install Web Deploy on GitHub Runner
-        choco install webdeploy -y
-        
-        # Package and deploy the Angular app using Web Deploy
-        msdeploy.exe -verb:sync -source:contentPath="./dist/my-angular9-app" -dest:contentPath="C:\inetpub\wwwroot\my-angular9-app",computerName="https://${{ secrets.WEBDEPLOY_SERVER }}:8172/msdeploy.axd",userName="${{ secrets.WEBDEPLOY_USER }}",password="${{ secrets.WEBDEPLOY_PASS }}" -enableRule:AppOffline
+        echo "$EC2_SSH_KEY" > key.pem
+        chmod 600 key.pem
+        scp -i key.pem -r dist/angular-application/* $EC2_USER@$EC2_PUBLIC_IP:/var/www/angular-app/
+        ssh -i key.pem $EC2_USER@$EC2_PUBLIC_IP "sudo systemctl restart nginx"
