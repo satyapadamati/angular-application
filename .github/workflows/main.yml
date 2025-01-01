@@ -24,8 +24,9 @@ jobs:
     - name: Build Angular project
       run: npm run build -- --prod
 
-    - name: Add EC2 host to known_hosts
+    - name: Set up SSH
       run: |
+        mkdir -p ~/.ssh
         ssh-keyscan -H ${{ secrets.EC2_PUBLIC_IP }} >> ~/.ssh/known_hosts
 
     - name: Deploy to EC2
